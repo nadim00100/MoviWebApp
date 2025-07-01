@@ -7,7 +7,7 @@ Handles routing, OMDb API integration, and interacts with the DataManager.
 from dotenv import load_dotenv
 import os
 
-load_dotenv()  # Load environment variables from .env
+load_dotenv()
 
 from flask import Flask, render_template, request, redirect, url_for
 from data_manager import DataManager
@@ -16,15 +16,16 @@ from models import db, User, Movie
 app = Flask(__name__)
 
 # --- SQLAlchemy Database Configuration ---
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moviweb.sqlite'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False # Suppress warning
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moviweb.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
-db.init_app(app) # Initialize SQLAlchemy with the Flask app
+db.init_app(app)
 
 # --- DataManager Initialization ---
 data_manager = DataManager()
 
-# --- Database Table Creation (run once) ---
+# --- Database Table Creation ---
+# Creates database tables if they don't exist within the application context.
 with app.app_context():
     db.create_all()
 
@@ -32,8 +33,8 @@ with app.app_context():
 @app.route('/')
 def home():
     """
-    Renders the home page, displaying a list of all registered users
-    and a form for adding new users.
+    Renders the home page of the application, displaying a list of all
+    registered users and a form for adding new users.
     """
     users = data_manager.get_users()
     return render_template('index.html', users=users)
@@ -43,39 +44,32 @@ def home():
 def create_user():
     """
     Handles the form submission for adding a new user.
-    Redirects back to the home page after creation.
+    Retrieves the user name from the form and creates a new user in the database.
+    Redirects back to the home page after successful creation.
     """
     user_name = request.form.get('user_name')
     if user_name:
         data_manager.create_user(user_name)
     return redirect(url_for('home'))
 
-# New route for displaying a user's movies
+
 @app.route('/users/<int:user_id>/movies', methods=['GET'])
 def list_user_movies(user_id: int):
     """
     Displays the list of favorite movies for a specific user.
+    Includes a form to add new movies to this user's list.
 
     Args:
         user_id (int): The ID of the user whose movies to display.
     """
     user = data_manager.get_user_by_id(user_id)
     if not user:
-        # Handle case where user does not exist (e.g., redirect or 404)
-        # For now, let's redirect to home
-        return redirect(url_for('home'))
+        return redirect(url_for('home')) # Redirect if user not found
 
     movies = data_manager.get_movies(user_id)
     return render_template('movies.html', user=user, movies=movies)
 
 
-# DEPRECATED route (from previous step) - you can remove this now if you wish,
-# as the / route effectively handles listing users.
-# @app.route('/users')
-# def list_users():
-#     users = data_manager.get_users()
-#     return str(users)
-
-
+# Main entry point for running the Flask application.
 if __name__ == '__main__':
     app.run(debug=True)
