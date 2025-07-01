@@ -112,6 +112,24 @@ def list_user_movies(user_id: int):
     return render_template('movies.html', user=user, movies=movies)
 
 
+@app.route('/users/<int:user_id>/movies/<int:movie_id>/edit', methods=['GET'])
+def edit_movie(user_id: int, movie_id: int):
+    """
+    Displays a form to edit the details of a specific movie.
+
+    Args:
+        user_id (int): The ID of the user who owns the movie.
+        movie_id (int): The ID of the movie to be edited.
+    """
+    user = data_manager.get_user_by_id(user_id)
+    movie = data_manager.get_movie_by_id(movie_id)
+
+    if not user or not movie or movie.user_id != user_id:
+        return redirect(url_for('home'))
+
+    return render_template('edit_movie.html', user=user, movie=movie)
+
+
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/update', methods=['POST'])
 def update_movie(user_id: int, movie_id: int):
     """
@@ -143,22 +161,26 @@ def update_movie(user_id: int, movie_id: int):
     return redirect(url_for('list_user_movies', user_id=user.id))
 
 
-@app.route('/users/<int:user_id>/movies/<int:movie_id>/edit', methods=['GET'])
-def edit_movie(user_id: int, movie_id: int):
+@app.route('/users/<int:user_id>/movies/<int:movie_id>/delete', methods=['POST'])
+def delete_movie(user_id: int, movie_id: int):
     """
-    Displays a form to edit the details of a specific movie.
+    Handles the POST request to delete a specific movie from a user's list.
 
     Args:
         user_id (int): The ID of the user who owns the movie.
-        movie_id (int): The ID of the movie to be edited.
+        movie_id (int): The ID of the movie to be deleted.
     """
     user = data_manager.get_user_by_id(user_id)
     movie = data_manager.get_movie_by_id(movie_id)
 
-    if not user or not movie or movie.user_id != user_id:
-        return redirect(url_for('home'))
+    # Basic security check: ensure user exists and movie belongs to that user
+    if user and movie and movie.user_id == user_id:
+        data_manager.delete_movie(movie_id)
+    else:
+        print(f"Attempted to delete movie {movie_id} for user {user_id} but conditions not met.")
+        # In a real app, you might show an error message.
 
-    return render_template('edit_movie.html', user=user, movie=movie)
+    return redirect(url_for('list_user_movies', user_id=user_id))
 
 
 # Main entry point for running the Flask application.
