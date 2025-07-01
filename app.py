@@ -112,7 +112,6 @@ def list_user_movies(user_id: int):
     return render_template('movies.html', user=user, movies=movies)
 
 
-# ADDED IN STEP 15
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/edit', methods=['GET'])
 def edit_movie(user_id: int, movie_id: int):
     """
@@ -123,14 +122,12 @@ def edit_movie(user_id: int, movie_id: int):
         movie_id (int): The ID of the movie to be edited.
     """
     user = data_manager.get_user_by_id(user_id)
-    movie = data_manager.get_movie_by_id(movie_id) # Uses the new method from DataManager
+    movie = data_manager.get_movie_by_id(movie_id)
 
     if not user or not movie or movie.user_id != user_id:
-        # Redirect if user or movie not found, or if movie doesn't belong to the user
         return redirect(url_for('home'))
 
-    # This will render a template later. For now, a placeholder:
-    return f"Editing movie: {movie.name} (ID: {movie.id}) for user: {user.name} (ID: {user.id})"
+    return render_template('edit_movie.html', user=user, movie=movie)
 
 
 # Main entry point for running the Flask application.
