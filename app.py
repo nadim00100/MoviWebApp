@@ -9,9 +9,9 @@ import os
 
 load_dotenv()  # Load environment variables from .env
 
-from flask import Flask
+from flask import Flask, render_template # Add render_template here
 from data_manager import DataManager
-from models import db, User, Movie # Import db, User, and Movie models
+from models import db, User, Movie
 
 app = Flask(__name__)
 
@@ -33,20 +33,20 @@ data_manager = DataManager()
 @app.route('/')
 def home():
     """
-    Renders the home page of the application.
-    Currently, displays a welcome message.
+    Renders the home page, which will eventually list all users and
+    provide a form to add new users.
     """
-    return "Welcome to MoviWeb App!"
+    return render_template('index.html') # Render the index.html template
+
 
 @app.route('/users')
 def list_users():
     """
     Retrieves and temporarily displays a list of all registered users.
+    This will be updated to render a proper HTML template later.
     """
     users = data_manager.get_users()
-    return str(users)  # For now, returning users as a string representation
+    return str(users)
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
     app.run(debug=True)
