@@ -112,6 +112,37 @@ def list_user_movies(user_id: int):
     return render_template('movies.html', user=user, movies=movies)
 
 
+@app.route('/users/<int:user_id>/movies/<int:movie_id>/update', methods=['POST'])
+def update_movie(user_id: int, movie_id: int):
+    """
+    Handles the form submission for updating an existing movie's details.
+
+    Args:
+        user_id (int): The ID of the user who owns the movie.
+        movie_id (int): The ID of the movie to be updated.
+    """
+    user = data_manager.get_user_by_id(user_id)
+    movie = data_manager.get_movie_by_id(movie_id)
+
+    if not user or not movie or movie.user_id != user_id:
+        return redirect(url_for('home'))
+
+    # Get updated data from the form
+    new_name = request.form.get('movie_name')
+    new_director = request.form.get('director')
+    new_year_str = request.form.get('year') # Year comes as string from form
+
+    # Convert year to int, handle empty string
+    new_year = int(new_year_str) if new_year_str and new_year_str.isdigit() else None
+
+    if new_name and new_director: # Basic validation that critical fields are not empty
+        data_manager.update_movie(movie_id, new_name, new_director, new_year)
+    else:
+        print("Error: Movie name or director cannot be empty for update.") # For debugging
+
+    return redirect(url_for('list_user_movies', user_id=user.id))
+
+
 @app.route('/users/<int:user_id>/movies/<int:movie_id>/edit', methods=['GET'])
 def edit_movie(user_id: int, movie_id: int):
     """

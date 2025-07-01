@@ -87,20 +87,24 @@ class DataManager:
         """
         return Movie.query.get(movie_id)
 
-    def update_movie(self, movie_id: int, new_title: str) -> Optional[Movie]:
+    def update_movie(self, movie_id: int, new_name: str, new_director: str, new_year: Optional[int]) -> Optional[Movie]:
         """
-        Updates the title of a specific movie in the database.
+        Updates the details of a specific movie in the database.
 
         Args:
             movie_id (int): The ID of the movie to update.
-            new_title (str): The new title for the movie.
+            new_name (str): The new title for the movie.
+            new_director (str): The new director for the movie.
+            new_year (Optional[int]): The new release year for the movie (can be None).
 
         Returns:
             Optional[Movie]: The updated Movie object if found, otherwise None.
         """
         movie = Movie.query.get(movie_id)
         if movie:
-            movie.name = new_title
+            movie.name = new_name
+            movie.director = new_director
+            movie.year = new_year
             db.session.commit()
         return movie
 
