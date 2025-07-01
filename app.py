@@ -9,7 +9,7 @@ import os
 
 load_dotenv()  # Load environment variables from .env
 
-from flask import Flask, render_template # Add render_template here
+from flask import Flask, render_template, request, redirect, url_for
 from data_manager import DataManager
 from models import db, User, Movie
 
@@ -33,17 +33,30 @@ data_manager = DataManager()
 @app.route('/')
 def home():
     """
-    Renders the home page, which will eventually list all users and
-    provide a form to add new users.
+    Renders the home page, displaying a list of all registered users
+    and a form for adding new users.
     """
-    return render_template('index.html') # Render the index.html template
+    users = data_manager.get_users()
+    return render_template('index.html', users=users)
 
 
-@app.route('/users')
+@app.route('/users', methods=['POST'])
+def create_user():
+    """
+    Handles the form submission for adding a new user.
+    Redirects back to the home page after creation.
+    """
+    user_name = request.form.get('user_name')
+    if user_name:
+        data_manager.create_user(user_name)
+    return redirect(url_for('home')) # Redirect back to the home page
+
+
+@app.route('/users') # This route needs to be changed or removed later as / is the user list
 def list_users():
     """
-    Retrieves and temporarily displays a list of all registered users.
-    This will be updated to render a proper HTML template later.
+    DEPRECATED: This route was for temporarily displaying users as a string.
+    The / route now handles user display.
     """
     users = data_manager.get_users()
     return str(users)
