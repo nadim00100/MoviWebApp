@@ -6,6 +6,7 @@ Handles routing, OMDb API integration, and interacts with the DataManager.
 
 from dotenv import load_dotenv
 import os
+import requests # Added for OMDb API calls
 
 load_dotenv()
 
@@ -53,21 +54,83 @@ def create_user():
     return redirect(url_for('home'))
 
 
-@app.route('/users/<int:user_id>/movies', methods=['GET'])
+@app.route('/users/<int:user_id>/movies', methods=['GET', 'POST'])
 def list_user_movies(user_id: int):
     """
-    Displays the list of favorite movies for a specific user.
-    Includes a form to add new movies to this user's list.
+    Displays the list of favorite movies for a specific user via GET request.
+    Handles adding a new movie to the user's list via POST request,
+    including fetching movie details from the OMDb API.
 
     Args:
-        user_id (int): The ID of the user whose movies to display.
+        user_id (int): The ID of the user.
     """
     user = data_manager.get_user_by_id(user_id)
     if not user:
-        return redirect(url_for('home')) # Redirect if user not found
+        # If the user does not exist, redirect to the home page.
+        return redirect(url_for('home'))
 
+    if request.method == 'POST':
+        movie_title = request.form.get('movie_name')
+        if movie_title:
+            omdb_api_key = os.getenv('OMDB_API_KEY')
+            if not omdb_api_key:
+                print("Error: OMDb API Key not found in .env. Please set it up.")
+                return redirect(url_for('list_user_movies', user_id=user.id))
+
+            omdb_url = f"http://www.omdbapi.com/?t={movie_title}&apikey={omdb_api_key}"
+            try:
+                response = requests.get(omdb_url)
+                response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+                movie_data = response.json()
+
+                if movie_data and movie_data.get('Response') == 'True':
+                    # Extract relevant data, handling potential missing fields
+                    name = movie_data.get('Title')
+                    director = movie_data.get('Director')
+                    # Ensure 'Year' is an integer, or None if not available/valid
+                    year = int(movie_data.get('Year', 0)) if movie_data.get('Year') and movie_data.get('Year').isdigit() else None
+                    poster_url = movie_data.get('Poster')
+
+                    # Create Movie object and add to DB
+                    new_movie = Movie(
+                        name=name,
+                        director=director,
+                        year=year,
+                        poster_url=poster_url,
+                        user_id=user.id
+                    )
+                    data_manager.add_movie(new_movie)
+                else:
+                    print(f"Movie '{movie_title}' not found on OMDb or API error: {movie_data.get('Error', 'Unknown Error')}")
+            except requests.exceptions.RequestException as e:
+                print(f"Error fetching movie from OMDb: {e}")
+
+        return redirect(url_for('list_user_movies', user_id=user.id))
+
+    # This block executes for GET requests: display the movies
     movies = data_manager.get_movies(user_id)
     return render_template('movies.html', user=user, movies=movies)
+
+
+# ADDED IN STEP 15
+@app.route('/users/<int:user_id>/movies/<int:movie_id>/edit', methods=['GET'])
+def edit_movie(user_id: int, movie_id: int):
+    """
+    Displays a form to edit the details of a specific movie.
+
+    Args:
+        user_id (int): The ID of the user who owns the movie.
+        movie_id (int): The ID of the movie to be edited.
+    """
+    user = data_manager.get_user_by_id(user_id)
+    movie = data_manager.get_movie_by_id(movie_id) # Uses the new method from DataManager
+
+    if not user or not movie or movie.user_id != user_id:
+        # Redirect if user or movie not found, or if movie doesn't belong to the user
+        return redirect(url_for('home'))
+
+    # This will render a template later. For now, a placeholder:
+    return f"Editing movie: {movie.name} (ID: {movie.id}) for user: {user.name} (ID: {user.id})"
 
 
 # Main entry point for running the Flask application.

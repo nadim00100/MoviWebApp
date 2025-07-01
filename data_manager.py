@@ -1,16 +1,15 @@
 # data_manager.py
 """
-This module defines the DataManager class for handling database operations
-related to users and movies within the MoviWeb application.
+Manages database operations for the MoviWeb App using SQLAlchemy.
+Provides methods for CRUD operations on User and Movie objects.
 """
 
 from models import db, User, Movie
-
+from typing import List, Optional # Added Optional for clarity with None return
 
 class DataManager:
     """
-    Manages all Create, Read, Update, and Delete (CRUD) operations
-    for users and movies in the database using SQLAlchemy ORM.
+    Handles basic CRUD operations for the User and Movie models.
     """
 
     def create_user(self, name: str) -> User:
@@ -18,9 +17,9 @@ class DataManager:
         Adds a new user to the database.
 
         Args:
-            name (str): The name of the user to create.
+            name (str): The name of the user.
 
-                                Returns:
+        Returns:
             User: The newly created User object.
         """
         new_user = User(name=name)
@@ -28,87 +27,82 @@ class DataManager:
         db.session.commit()
         return new_user
 
-    def get_users(self) -> list[User]:
+    def get_users(self) -> List[User]:
         """
-        Retrieves a list of all users from the database.
+        Returns a list of all users in the database.
 
         Returns:
-            list[User]: A list of User objects.
+            List[User]: A list of User objects.
         """
         return User.query.all()
 
-    def get_user_by_id(self, user_id: int) -> User | None:
+    def get_user_by_id(self, user_id: int) -> Optional[User]:
         """
-        Retrieves a user by their ID from the database.
+        Retrieves a user by their ID.
 
         Args:
             user_id (int): The ID of the user to retrieve.
 
         Returns:
-            User | None: The User object if found, otherwise None.
+            Optional[User]: The User object if found, otherwise None.
         """
         return User.query.get(user_id)
 
-    def get_movies(self, user_id: int) -> list[Movie]:
+    def get_movies(self, user_id: int) -> List[Movie]:
         """
-        Retrieves a list of all movies for a specific user from the database.
+        Returns a list of all movies for a specific user.
 
         Args:
             user_id (int): The ID of the user whose movies to retrieve.
 
         Returns:
-            list[Movie]: A list of Movie objects belonging to the specified user.
+            List[Movie]: A list of Movie objects belonging to the user.
         """
-        user = self.get_user_by_id(user_id)
+        # Ensure the user exists before querying for movies
+        user = User.query.get(user_id)
         if user:
-            # 'movies' is the relationship defined in the User model
-            return user.movies
+            return user.movies # Access the relationship
         return []
 
-    def add_movie(self, movie: Movie) -> Movie:
+    def add_movie(self, movie: Movie) -> None:
         """
-        Adds a new movie to a user's favorite list in the database.
+        Adds a new movie to a user's favorites in the database.
 
         Args:
-            movie (Movie): The Movie object to add. This object should
-                           already have its user_id set.
-
-        Returns:
-            Movie: The newly added Movie object.
+            movie (Movie): The Movie object to add. It should already have a user_id.
         """
         db.session.add(movie)
         db.session.commit()
-        return movie
 
-    def update_movie(self, movie_id: int, new_name: str = None,
-                     new_director: str = None, new_year: int = None,
-                     new_poster_url: str = None) -> Movie | None:
+    # ADDED IN STEP 15
+    def get_movie_by_id(self, movie_id: int) -> Optional[Movie]:
         """
-        Updates the details of a specific movie in the database.
+        Retrieves a movie by its ID from the database.
+
+        Args:
+            movie_id (int): The ID of the movie to retrieve.
+
+        Returns:
+            Movie | None: The Movie object if found, otherwise None.
+        """
+        return Movie.query.get(movie_id)
+
+    def update_movie(self, movie_id: int, new_title: str) -> Optional[Movie]:
+        """
+        Updates the title of a specific movie in the database.
 
         Args:
             movie_id (int): The ID of the movie to update.
-            new_name (str, optional): The new title of the movie.
-            new_director (str, optional): The new director of the movie.
-            new_year (int, optional): The new release year of the movie.
-            new_poster_url (str, optional): The new poster URL of the movie.
+            new_title (str): The new title for the movie.
 
         Returns:
-            Movie | None: The updated Movie object if found, otherwise None.
+            Optional[Movie]: The updated Movie object if found, otherwise None.
         """
         movie = Movie.query.get(movie_id)
         if movie:
-            if new_name is not None:
-                movie.name = new_name
-            if new_director is not None:
-                movie.director = new_director
-            if new_year is not None:
-                movie.year = new_year
-            if new_poster_url is not None:
-                movie.poster_url = new_poster_url
+            movie.name = new_title
             db.session.commit()
-            return movie
-        return None
+        return movie
 
     def delete_movie(self, movie_id: int) -> bool:
         """
