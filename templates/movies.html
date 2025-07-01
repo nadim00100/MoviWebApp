@@ -8,19 +8,39 @@
 
     <a href="{{ url_for('home') }}">Back to User List</a>
 
+    {# NEW: Movie Search Form #}
+    <h2>Search Movies</h2>
+    <form action="{{ url_for('list_user_movies', user_id=user.id) }}" method="GET" class="search-form">
+        <label for="search_query">Search by Title:</label>
+        <input type="text" id="search_query" name="query" value="{{ request.args.get('query', '') }}">
+        <button type="submit">Search</button>
+        {% if request.args.get('query') %}
+            <a href="{{ url_for('list_user_movies', user_id=user.id) }}" class="button-link clear-search-button">Clear Search</a>
+        {% endif %}
+    </form>
+
     <h2>Movies</h2>
     {% if movies %}
         <ul>
             {% for movie in movies %}
                 <li>
-                    <strong>{{ movie.name }}</strong> ({{ movie.year }}) - Director: {{ movie.director }}
+                    <div class="movie-info-header">
+                        <strong>{{ movie.name }}</strong> ({{ movie.year }})
+                    </div>
                     {% if movie.poster_url %}
-                        <br><img src="{{ movie.poster_url }}" alt="{{ movie.name }} Poster" style="width:100px; height:auto;">
+                        <div class="movie-poster-container">
+                            <img src="{{ movie.poster_url }}" alt="{{ movie.name }} Poster" style="width:100px; height:auto;">
+                        </div>
                     {% endif %}
-                    <a href="{{ url_for('edit_movie', user_id=user.id, movie_id=movie.id) }}">Update</a>
-                    <form action="{{ url_for('delete_movie', user_id=user.id, movie_id=movie.id) }}" method="POST" style="display:inline;">
-                        <button type="submit">Delete</button>
-                    </form>
+                    <div class="movie-director-info">
+                        Director: {{ movie.director }}
+                    </div>
+                    <div class="movie-actions-container">
+                        <a href="{{ url_for('edit_movie', user_id=user.id, movie_id=movie.id) }}" class="button-link update-button">Update</a>
+                        <form action="{{ url_for('delete_movie', user_id=user.id, movie_id=movie.id) }}" method="POST">
+                            <button type="submit">Delete</button>
+                        </form>
+                    </div>
                 </li>
             {% endfor %}
         </ul>

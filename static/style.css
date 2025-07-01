@@ -52,15 +52,14 @@ ul li {
     margin-bottom: 10px;
     padding: 15px;
     border-radius: 5px;
-    display: flex; /* Use flexbox for layout */
-    align-items: center; /* Vertically align items */
-    flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+    display: flex;              /* Enable flexbox */
+    flex-direction: column;     /* Stack children vertically */
+    align-items: flex-start;    /* Align content to the left */
 }
 
 ul li a {
     color: #007bff;
     text-decoration: none;
-    margin-left: 15px; /* Space out links/buttons */
 }
 
 ul li a:hover {
@@ -115,7 +114,6 @@ form button[type="submit"]:hover {
 /* Small form adjustments for inline buttons */
 ul li form {
     display: inline-block; /* Keep delete button inline */
-    margin-left: 10px;
     padding: 0;
     border: none;
     background: none;
@@ -170,4 +168,107 @@ footer {
     background-color: #fff3cd;
     color: #856404;
     border-color: #ffeeba;
+}
+
+/* Styling for movie list item sections */
+.movie-info-header {
+    margin-bottom: 5px;
+    font-size: 1.1em;
+}
+
+.movie-poster-container {
+    margin-bottom: 5px; /* Space below the poster */
+}
+
+.movie-director-info {
+    margin-bottom: 10px; /* Space below director before actions */
+}
+
+.movie-actions-container {
+    margin-top: 5px;
+    display: flex;
+    align-items: center; /* This is crucial for vertical alignment */
+    width: 100%;
+    justify-content: flex-start;
+}
+
+/* Ensure consistent spacing and remove default form margins */
+.movie-actions-container .button-link,
+.movie-actions-container form {
+    /* These elements are direct flex items of .movie-actions-container */
+    /* Apply horizontal spacing between them */
+    margin-right: 10px;
+    /* Reset any conflicting default margins/paddings that might affect vertical alignment */
+    margin-top: 0;
+    margin-bottom: 0;
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+/* Specific adjustments for the form itself to normalize its behavior within the flex container */
+.movie-actions-container form {
+    margin: 0; /* Remove all default margins from the form */
+    padding: 0; /* Remove all default padding from the form */
+    display: flex; /* Make the form itself a flex container */
+    align-items: center; /* Vertically align the button inside the form */
+    height: 100%; /* Ensure form takes full height of its flex row, helps with alignment */
+}
+
+/* General Button-like Link Styling */
+.button-link {
+    display: inline-block; /* Allows padding and margins like a block, but stays inline */
+    padding: 10px 15px;
+    border: none; /* No border by default */
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 1rem;
+    text-align: center;
+    text-decoration: none; /* Remove underline for links */
+    color: #fff; /* White text for button-like links */
+    transition: background-color 0.3s ease; /* Smooth hover effect */
+}
+
+.button-link:hover {
+    opacity: 0.9; /* Slight fade on hover for all button-links */
+}
+
+/* Specific Styling for the Update Button (Green) */
+.update-button {
+    background: #28a745; /* A vibrant green */
+}
+
+.update-button:hover {
+    background: #218838; /* A slightly darker green on hover */
+}
+
+/* NEW: Search Form Styling */
+.search-form {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Space between elements */
+    margin-bottom: 20px; /* Space below the search form */
+}
+
+.search-form label {
+    margin-bottom: 0; /* Override default label margin for inline display */
+    flex-shrink: 0; /* Prevent label from shrinking */
+}
+
+.search-form input[type="text"] {
+    flex-grow: 1; /* Allow input to take available space */
+    margin-bottom: 0; /* Override default input margin for inline display */
+}
+
+.search-form button[type="submit"] {
+    flex-shrink: 0; /* Prevent button from shrinking */
+    /* Use default button style or customize */
+}
+
+/* Clear Search Button (inherits .button-link style) */
+.clear-search-button {
+    background: #6c757d; /* A neutral gray for "clear" */
+}
+
+.clear-search-button:hover {
+    background: #5a6268; /* Darker gray on hover */
 }

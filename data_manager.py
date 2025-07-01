@@ -64,6 +64,29 @@ class DataManager:
             return user.movies # Access the relationship
         return []
 
+    def search_movies(self, user_id: int, query: str) -> List[Movie]:
+        """
+        Searches for movies belonging to a specific user by title.
+
+        Args:
+            user_id (int): The ID of the user whose movies to search.
+            query (str): The search term for movie titles.
+
+        Returns:
+            List[Movie]: A list of Movie objects matching the query.
+        """
+        if not query:
+            return self.get_movies(user_id) # If query is empty, return all movies for the user
+
+        # Case-insensitive search using ILIKE for PostgreSQL or LIKE for SQLite/MySQL
+        # For SQLite (default for this project), use LIKE. The % is a wildcard.
+        search_pattern = f"%{query}%"
+        movies = Movie.query.filter(
+            Movie.user_id == user_id,
+            Movie.name.ilike(search_pattern) # Use .ilike for case-insensitive LIKE
+        ).all()
+        return movies
+
     def add_movie(self, movie: Movie) -> None:
         """
         Adds a new movie to a user's favorites in the database.

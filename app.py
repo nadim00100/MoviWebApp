@@ -64,40 +64,38 @@ def list_user_movies(user_id: int):
     """
     Displays the list of favorite movies for a specific user via GET request.
     Handles adding a new movie to the user's list via POST request,
-    including fetching movie details from the OMDb API.
+    and also handles searching movies via GET request.
 
     Args:
         user_id (int): The ID of the user.
     """
     user = data_manager.get_user_by_id(user_id)
     if not user:
-        flash("User not found!", 'error') # Flash message
+        flash("User not found!", 'error')
         return redirect(url_for('home'))
 
     if request.method == 'POST':
+        # --- EXISTING POST LOGIC FOR ADDING MOVIES ---
         movie_title = request.form.get('movie_name')
         if movie_title:
             omdb_api_key = os.getenv('OMDB_API_KEY')
             if not omdb_api_key:
                 print("Error: OMDb API Key not found in .env. Please set it up.")
-                flash("OMDb API Key not configured. Cannot add movie.", 'error') # Flash message
+                flash("OMDb API Key not configured. Cannot add movie.", 'error')
                 return redirect(url_for('list_user_movies', user_id=user.id))
 
             omdb_url = f"http://www.omdbapi.com/?t={movie_title}&apikey={omdb_api_key}"
             try:
                 response = requests.get(omdb_url)
-                response.raise_for_status()  # Raise an HTTPError for bad responses (4xx or 5xx)
+                response.raise_for_status()
                 movie_data = response.json()
 
                 if movie_data and movie_data.get('Response') == 'True':
-                    # Extract relevant data, handling potential missing fields
                     name = movie_data.get('Title')
                     director = movie_data.get('Director')
-                    # Ensure 'Year' is an integer, or None if not available/valid
                     year = int(movie_data.get('Year', 0)) if movie_data.get('Year') and movie_data.get('Year').isdigit() else None
                     poster_url = movie_data.get('Poster')
 
-                    # Create Movie object and add to DB
                     new_movie = Movie(
                         name=name,
                         director=director,
@@ -106,20 +104,27 @@ def list_user_movies(user_id: int):
                         user_id=user.id
                     )
                     data_manager.add_movie(new_movie)
-                    flash(f"Movie '{name}' added successfully!", 'success') # Flash message
+                    flash(f"Movie '{name}' added successfully!", 'success')
                 else:
                     error_message = movie_data.get('Error', 'Unknown Error')
                     print(f"Movie '{movie_title}' not found on OMDb or API error: {error_message}")
-                    flash(f"Could not add movie '{movie_title}': {error_message}", 'warning') # Flash message
+                    flash(f"Could not add movie '{movie_title}': {error_message}", 'warning')
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching movie from OMDb: {e}")
-                flash(f"Error connecting to OMDb. Could not add movie '{movie_title}'.", 'error') # Flash message
+                flash(f"Error connecting to OMDb. Could not add movie '{movie_title}'.", 'error')
         else:
-            flash("Movie title cannot be empty!", 'error') # Flash message
+            flash("Movie title cannot be empty!", 'error')
         return redirect(url_for('list_user_movies', user_id=user.id))
 
-    # This block executes for GET requests: display the movies
-    movies = data_manager.get_movies(user_id)
+    # --- MODIFIED GET LOGIC FOR DISPLAYING/SEARCHING MOVIES ---
+    search_query = request.args.get('query', '').strip() # Get search query from URL parameters
+    if search_query:
+        movies = data_manager.search_movies(user_id, search_query)
+        if not movies:
+            flash(f"No movies found matching '{search_query}'.", 'info') # Use 'info' for no results
+    else:
+        movies = data_manager.get_movies(user_id)
+
     return render_template('movies.html', user=user, movies=movies)
 
 
