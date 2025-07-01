@@ -5,7 +5,7 @@ Provides methods for CRUD operations on User and Movie objects.
 """
 
 from models import db, User, Movie
-from typing import List, Optional # Added Optional for clarity with None return
+from typing import List, Optional
 
 class DataManager:
     """
@@ -74,7 +74,6 @@ class DataManager:
         db.session.add(movie)
         db.session.commit()
 
-    # ADDED IN STEP 15
     def get_movie_by_id(self, movie_id: int) -> Optional[Movie]:
         """
         Retrieves a movie by its ID from the database.

@@ -1,3 +1,4 @@
+{# templates/base.html #}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,20 +10,27 @@
 <body>
     <header>
         <nav>
-            <div class="container">
-                <a href="{{ url_for('home') }}" class="logo">MoviWeb</a>
-                </div>
+            <a href="{{ url_for('home') }}">MoviWeb App</a>
         </nav>
     </header>
 
     <main class="container">
+        {# THIS BLOCK DISPLAYS FLASHED MESSAGES #}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+
         {% block content %}{% endblock %}
     </main>
 
     <footer>
-        <div class="container">
-            <p>&copy; 2025 MoviWeb App. All rights reserved.</p>
-        </div>
+        <p>&copy; 2025 MoviWeb App</p>
     </footer>
 </body>
 </html>

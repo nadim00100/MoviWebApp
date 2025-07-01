@@ -10,11 +10,13 @@ import requests # Added for OMDb API calls
 
 load_dotenv()
 
-from flask import Flask, render_template, request, redirect, url_for
+from flask import Flask, render_template, request, redirect, url_for, flash # ADD 'flash' here
 from data_manager import DataManager
 from models import db, User, Movie
 
 app = Flask(__name__)
+# Add a secret key for session management (required for flash messages)
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'a_very_secret_fallback_key_for_dev') # GET FROM .env or use fallback
 
 # --- SQLAlchemy Database Configuration ---
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moviweb.db'
@@ -51,6 +53,9 @@ def create_user():
     user_name = request.form.get('user_name')
     if user_name:
         data_manager.create_user(user_name)
+        flash(f"User '{user_name}' created successfully!", 'success') # Flash message
+    else:
+        flash("User name cannot be empty!", 'error') # Flash message
     return redirect(url_for('home'))
 
 
@@ -66,7 +71,7 @@ def list_user_movies(user_id: int):
     """
     user = data_manager.get_user_by_id(user_id)
     if not user:
-        # If the user does not exist, redirect to the home page.
+        flash("User not found!", 'error') # Flash message
         return redirect(url_for('home'))
 
     if request.method == 'POST':
@@ -75,6 +80,7 @@ def list_user_movies(user_id: int):
             omdb_api_key = os.getenv('OMDB_API_KEY')
             if not omdb_api_key:
                 print("Error: OMDb API Key not found in .env. Please set it up.")
+                flash("OMDb API Key not configured. Cannot add movie.", 'error') # Flash message
                 return redirect(url_for('list_user_movies', user_id=user.id))
 
             omdb_url = f"http://www.omdbapi.com/?t={movie_title}&apikey={omdb_api_key}"
@@ -100,11 +106,16 @@ def list_user_movies(user_id: int):
                         user_id=user.id
                     )
                     data_manager.add_movie(new_movie)
+                    flash(f"Movie '{name}' added successfully!", 'success') # Flash message
                 else:
-                    print(f"Movie '{movie_title}' not found on OMDb or API error: {movie_data.get('Error', 'Unknown Error')}")
+                    error_message = movie_data.get('Error', 'Unknown Error')
+                    print(f"Movie '{movie_title}' not found on OMDb or API error: {error_message}")
+                    flash(f"Could not add movie '{movie_title}': {error_message}", 'warning') # Flash message
             except requests.exceptions.RequestException as e:
                 print(f"Error fetching movie from OMDb: {e}")
-
+                flash(f"Error connecting to OMDb. Could not add movie '{movie_title}'.", 'error') # Flash message
+        else:
+            flash("Movie title cannot be empty!", 'error') # Flash message
         return redirect(url_for('list_user_movies', user_id=user.id))
 
     # This block executes for GET requests: display the movies
@@ -125,6 +136,7 @@ def edit_movie(user_id: int, movie_id: int):
     movie = data_manager.get_movie_by_id(movie_id)
 
     if not user or not movie or movie.user_id != user_id:
+        flash("Movie or user not found, or movie doesn't belong to user.", 'error') # Flash message
         return redirect(url_for('home'))
 
     return render_template('edit_movie.html', user=user, movie=movie)
@@ -143,20 +155,23 @@ def update_movie(user_id: int, movie_id: int):
     movie = data_manager.get_movie_by_id(movie_id)
 
     if not user or not movie or movie.user_id != user_id:
+        flash("Movie or user not found, or movie doesn't belong to user.", 'error') # Flash message
         return redirect(url_for('home'))
 
-    # Get updated data from the form
     new_name = request.form.get('movie_name')
     new_director = request.form.get('director')
-    new_year_str = request.form.get('year') # Year comes as string from form
+    new_year_str = request.form.get('year')
 
-    # Convert year to int, handle empty string
     new_year = int(new_year_str) if new_year_str and new_year_str.isdigit() else None
 
-    if new_name and new_director: # Basic validation that critical fields are not empty
-        data_manager.update_movie(movie_id, new_name, new_director, new_year)
+    if new_name and new_director:
+        updated_movie = data_manager.update_movie(movie_id, new_name, new_director, new_year)
+        if updated_movie:
+            flash(f"Movie '{updated_movie.name}' updated successfully!", 'success') # Flash message
+        else:
+            flash("Failed to update movie.", 'error') # Flash message
     else:
-        print("Error: Movie name or director cannot be empty for update.") # For debugging
+        flash("Movie name or director cannot be empty for update.", 'error') # Flash message
 
     return redirect(url_for('list_user_movies', user_id=user.id))
 
@@ -173,12 +188,14 @@ def delete_movie(user_id: int, movie_id: int):
     user = data_manager.get_user_by_id(user_id)
     movie = data_manager.get_movie_by_id(movie_id)
 
-    # Basic security check: ensure user exists and movie belongs to that user
     if user and movie and movie.user_id == user_id:
-        data_manager.delete_movie(movie_id)
+        if data_manager.delete_movie(movie_id):
+            flash(f"Movie '{movie.name}' deleted successfully!", 'success') # Flash message
+        else:
+            flash("Failed to delete movie.", 'error') # Flash message
     else:
         print(f"Attempted to delete movie {movie_id} for user {user_id} but conditions not met.")
-        # In a real app, you might show an error message.
+        flash("Movie or user not found, or movie doesn't belong to user.", 'error') # Flash message
 
     return redirect(url_for('list_user_movies', user_id=user_id))
 
