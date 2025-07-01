@@ -38,6 +38,14 @@ def home():
     """
     return "Welcome to MoviWeb App!"
 
+@app.route('/users')
+def list_users():
+    """
+    Retrieves and temporarily displays a list of all registered users.
+    """
+    users = data_manager.get_users()
+    return str(users)  # For now, returning users as a string representation
+
 if __name__ == '__main__':
     with app.app_context():
         db.create_all()
