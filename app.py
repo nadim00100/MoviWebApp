@@ -10,7 +10,7 @@ import requests # Added for OMDb API calls
 
 load_dotenv()
 
-from flask import Flask, render_template, request, redirect, url_for, flash # ADD 'flash' here
+from flask import Flask, render_template, request, redirect, url_for, flash
 from data_manager import DataManager
 from models import db, User, Movie
 
@@ -198,6 +198,15 @@ def delete_movie(user_id: int, movie_id: int):
         flash("Movie or user not found, or movie doesn't belong to user.", 'error') # Flash message
 
     return redirect(url_for('list_user_movies', user_id=user_id))
+
+
+# Add this error handler at the end of app.py, before if __name__ == '__main__':
+@app.errorhandler(404)
+def page_not_found(e):
+    """
+    Handles 404 Not Found errors, rendering a custom 404.html template.
+    """
+    return render_template('404.html'), 404 # Returns the template and the 404 status code
 
 
 # Main entry point for running the Flask application.
