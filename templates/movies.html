@@ -1,0 +1,33 @@
+{# templates/movies.html #}
+{% extends "base.html" %}
+
+{% block title %}{{ user.name }}'s Movies - MoviWeb App{% endblock %}
+
+{% block content %}
+    <h1>{{ user.name }}'s Favorite Movies</h1>
+
+    <a href="{{ url_for('home') }}">Back to User List</a>
+
+    <h2>Movies</h2>
+    {% if movies %}
+        <ul>
+            {% for movie in movies %}
+                <li>
+                    <strong>{{ movie.name }}</strong> ({{ movie.year }}) - Director: {{ movie.director }}
+                    {% if movie.poster_url %}
+                        <br><img src="{{ movie.poster_url }}" alt="{{ movie.name }} Poster" style="width:100px; height:auto;">
+                    {% endif %}
+                    </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No movies added for {{ user.name }} yet. Add one below!</p>
+    {% endif %}
+
+    <h2>Add New Movie</h2>
+    <form action="{{ url_for('add_movie_to_user', user_id=user.id) }}" method="POST">
+        <label for="movie_name">Movie Title:</label>
+        <input type="text" id="movie_name" name="movie_name" required>
+        <button type="submit">Add Movie</button>
+    </form>
+{% endblock %}

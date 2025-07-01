@@ -25,9 +25,8 @@ db.init_app(app) # Initialize SQLAlchemy with the Flask app
 data_manager = DataManager()
 
 # --- Database Table Creation (run once) ---
-# This block ensures tables are created when the app context is pushed.
-# It's good for initial setup and development.
-
+with app.app_context():
+    db.create_all()
 
 
 @app.route('/')
@@ -49,17 +48,34 @@ def create_user():
     user_name = request.form.get('user_name')
     if user_name:
         data_manager.create_user(user_name)
-    return redirect(url_for('home')) # Redirect back to the home page
+    return redirect(url_for('home'))
+
+# New route for displaying a user's movies
+@app.route('/users/<int:user_id>/movies', methods=['GET'])
+def list_user_movies(user_id: int):
+    """
+    Displays the list of favorite movies for a specific user.
+
+    Args:
+        user_id (int): The ID of the user whose movies to display.
+    """
+    user = data_manager.get_user_by_id(user_id)
+    if not user:
+        # Handle case where user does not exist (e.g., redirect or 404)
+        # For now, let's redirect to home
+        return redirect(url_for('home'))
+
+    movies = data_manager.get_movies(user_id)
+    return render_template('movies.html', user=user, movies=movies)
 
 
-@app.route('/users') # This route needs to be changed or removed later as / is the user list
-def list_users():
-    """
-    DEPRECATED: This route was for temporarily displaying users as a string.
-    The / route now handles user display.
-    """
-    users = data_manager.get_users()
-    return str(users)
+# DEPRECATED route (from previous step) - you can remove this now if you wish,
+# as the / route effectively handles listing users.
+# @app.route('/users')
+# def list_users():
+#     users = data_manager.get_users()
+#     return str(users)
+
 
 if __name__ == '__main__':
     app.run(debug=True)
